@@ -66,6 +66,7 @@ runs:
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
         sudo chown -R runner:runner ${{ github.workspace }}
+      shell: bash
 
     - name: Ensure clean directory
       run: |
@@ -88,6 +89,7 @@ runs:
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
+      shell: bash
 
     - name: Clone the repository (bare)
       run: |
