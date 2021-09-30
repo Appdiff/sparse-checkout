@@ -133,7 +133,7 @@ runs:
     - name: Clone the repository (bare)
       run: |
         echo "::group::Cloning the repository"
-        $GIT -c protocol.version=2 clone --branch ${{ steps.current_branch.outputs.current_branch }} --filter=blob:none --no-checkout ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}/${REPOSITORY} .
+        $GIT -c protocol.version=2 clone --branch ${{ steps.current_branch.outputs.current_branch }} --filter=blob:none --no-checkout ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${GH_TOKEN}@}/${REPOSITORY} .
         echo "::endgroup::"
       env:
         REPOSITORY: ${{ inputs.repository }}
