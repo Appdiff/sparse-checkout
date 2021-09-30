@@ -71,6 +71,10 @@ runs:
     - name: Ensure clean directory
       run: |
         sudo rm -rfv ${{ github.workspace }}/*
+        sudo rm -rfv ${{ github.workspace }}/.git
+        sudo rm -rfv ${{ github.workspace }}/.github
+        sudo rm ${{ github.workspace }}/.dockerignore
+        sudo rm ${{ github.workspace }}/.gitignore
         ls -la ${{ github.workspace }}
       env:
         DIRECTORY: ${{ inputs.path }}
