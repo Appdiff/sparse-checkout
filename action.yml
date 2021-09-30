@@ -77,6 +77,7 @@ runs:
         BASE_DIR=`basename "$PWD"`
         cd ..
         sudo rm -rf $BASE_DIR || true
+        mkdir -p $BASE_DIR
         cd $BASE_DIR
         ls -la ${{ github.workspace }}
       env:
