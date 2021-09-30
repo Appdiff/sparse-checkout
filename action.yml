@@ -74,12 +74,10 @@ runs:
 
     - name: Ensure clean directory
       run: |
-        sudo rm -rfv ${{ github.workspace }}/* || true
-        sudo rm -rfv ${{ github.workspace }}/.git || true
-        sudo rm -rfv ${{ github.workspace }}/.teamcity || true
-        sudo rm -rfv ${{ github.workspace }}/.github || true
-        sudo rm ${{ github.workspace }}/.dockerignore || true
-        sudo rm ${{ github.workspace }}/.gitignore || true
+        BASE_DIR=`basename "$PWD"`
+        cd ..
+        sudo rm -rf $BASE_DIR || true
+        cd BASE_DIR
         ls -la ${{ github.workspace }}
       env:
         DIRECTORY: ${{ inputs.path }}
