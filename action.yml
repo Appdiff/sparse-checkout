@@ -70,9 +70,7 @@ runs:
 
     - name: Ensure clean directory
       run: |
-        pwd
-        ls -la $DIRECTORY || true
-        sudo rm -rf $DIRECTORY || true
+        sudo rm -fr * .*
       env:
         DIRECTORY: ${{ inputs.path }}
       shell: bash
