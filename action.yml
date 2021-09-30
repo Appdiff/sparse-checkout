@@ -56,15 +56,6 @@ runs:
         fi
       shell: bash
 
-    - name: Creating directory
-      run: |
-        if [ -n "$DIRECTORY" ]; then
-          /bin/mkdir -p $DIRECTORY
-        fi
-      env:
-        DIRECTORY: ${{ inputs.path }}
-      shell: bash
-
     - name: Getting Git version info
       run: |
         echo "::group::Getting Git version info"
@@ -72,18 +63,17 @@ runs:
         echo "::endgroup::"
       shell: bash
 
-    - name: Initializing the repository
+    - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
-        echo "::group::Initializing the repository"
-        $GIT init
-        $GIT remote add origin ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}/${REPOSITORY}
-        #$GIT remote add origin ${GITHUB_SERVER_URL}/${REPOSITORY}
-        $GIT remote -v
-        echo "::endgroup::"
+        sudo chown -R runner:runner ${{ github.workspace }}
+
+    - name: Ensure clean directory
+      run: |
+        pwd
+        ls -la $DIRECTORY || true
+        sudo rm -rf $DIRECTORY || true
       env:
-        REPOSITORY: ${{ inputs.repository }}
-        TOKEN: ${{ inputs.token }}
-      working-directory: ${{ inputs.path }}
+        DIRECTORY: ${{ inputs.path }}
       shell: bash
 
     - name: Disabling automatic garbage collection
@@ -93,72 +83,30 @@ runs:
         echo "::endgroup::"
       working-directory: ${{ inputs.path }}
       shell: bash
+      
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
 
-# This doesn't work. What is wrong?
-#     - name: Setting up auth
-#       run: |
-#         echo "::group::Setting up auth"
-#         BASIC_CREDENTIAL=$(echo "x-access-token:${TOKEN}" | base64 -w0)
-#         echo "::add-mask::${BASIC_CREDENTIAL}"
-#         $GIT config --local http.${GITHUB_SERVER_URL}/.extraHeader "AUTHORIZATION: basic ${BASIC_CREDENTIAL}"
-#         echo "::endgroup::"
-#       env:
-#         TOKEN: ${{ inputs.token }}
-#       shell: bash
+    - name: Clone the repository (bare)
+      run: |
+        echo "::group::Cloning the repository"
+        $GIT -c protocol.version=2 clone --branch ${{ steps.extract_branch.outputs.branch }} --filter=blob:none --no-checkout ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}/${REPOSITORY} .
+        echo "::endgroup::"
+      env:
+        REPOSITORY: ${{ inputs.repository }}
+        GH_TOKEN: ${{ inputs.token }}
+      working-directory: ${{ inputs.path }}
+      shell: bash
 
-    - name: Setting up sparse checkout
+    - name: Sparse checkout
       run: |
         echo "::group::Setting up sparse checkout"
-        $GIT sparse-checkout init --cone
         $GIT sparse-checkout set $PATTERNS
+        $GIT read-tree -mu HEAD
         echo "::endgroup::"
       env:
         PATTERNS: ${{ inputs.patterns }}
-      working-directory: ${{ inputs.path }}
-      shell: bash
-
-    - name: Fetching the repository
-      run: |
-        echo "::group::Fetching the repository"
-        if [ -z "$REF" ]; then
-          if [ "$REPOSITORY" == "$GITHUB_REPOSITORY" ]; then
-            REF="${GITHUB_REF#refs/heads/}"
-          else
-            REF=$(gh api repos/$REPOSITORY --jq '.default_branch')
-          fi
-        fi
-        $GIT -c protocol.version=2 fetch --no-tags --prune --progress --depth=1 origin +${REF}:refs/remotes/origin/${REF}
-        echo "::endgroup::"
-      env:
-        REF: ${{ inputs.ref }}
-        REPOSITORY: ${{ inputs.repository }}
-        GH_TOKEN: ${{ inputs.token }}
-      working-directory: ${{ inputs.path }}
-      shell: bash
-
-    - name: Checking out the ref
-      run: |
-        echo "::group::Checking out the ref"
-        # FIXME: duplication with fetch
-        echo $REF
-        if [ -z "$REF" ]; then
-          if [ "$REPOSITORY" == "$GITHUB_REPOSITORY" ]; then
-            REF="${GITHUB_REF#refs/heads/}"
-          else
-            REF=$(gh api repos/$REPOSITORY --jq '.default_branch')
-          fi
-        fi
-        echo $REF
-        $GIT checkout --progress --force -B $REF refs/remotes/origin/$REF
-        echo "::endgroup::"
-      env:
-        REF: ${{ inputs.ref }}
-        REPOSITORY: ${{ inputs.repository }}
-        GH_TOKEN: ${{ inputs.token }}
-      working-directory: ${{ inputs.path }}
-      shell: bash
-
-    - name: Logging commit sha
-      run: $GIT log -1 --format='%H'
       working-directory: ${{ inputs.path }}
       shell: bash
