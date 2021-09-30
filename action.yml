@@ -48,7 +48,11 @@ runs:
     - name: Setting git path
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
-          echo "GIT=/usr/local/bin/git" >> $GITHUB_ENV
+          if [ ! -f /usr/local/bin/git ]; then
+            echo "GIT=/usr/bin/git" >> $GITHUB_ENV
+          else
+            echo "GIT=/usr/local/bin/git" >> $GITHUB_ENV
+          fi
         elif [ "$RUNNER_OS" == "Windows" ]; then
           echo "GIT=/cmd/git" >> $GITHUB_ENV
         else
@@ -65,7 +69,7 @@ runs:
 
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
-        sudo chown -R $USER:$USER ${{ github.workspace }}
+        sudo chown -R $USER:$USER ${{ github.workspace }} || true
       shell: bash
 
     - name: Ensure clean directory
