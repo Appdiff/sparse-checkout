@@ -71,16 +71,9 @@ runs:
     - name: Ensure clean directory
       run: |
         sudo rm -rfv ${{ github.workspace }}/*
+        ls -la ${{ github.workspace }}
       env:
         DIRECTORY: ${{ inputs.path }}
-      shell: bash
-
-    - name: Disabling automatic garbage collection
-      run: |
-        echo "::group::Disabling automatic garbage collection"
-        $GIT config --local gc.auto 0
-        echo "::endgroup::"
-      working-directory: ${{ inputs.path }}
       shell: bash
       
     - name: Extract branch name
