@@ -65,7 +65,7 @@ runs:
 
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
-        sudo chown -R runner:runner ${{ github.workspace }}
+        sudo chown -R $USER:$USER ${{ github.workspace }}
       shell: bash
 
     - name: Ensure clean directory
