@@ -70,6 +70,8 @@ runs:
 
     - name: Ensure clean directory
       run: |
+        echo "${{ github.workspace }}"
+        ls -la ${{ github.workspace }}
         sudo rm -fr * .*
       env:
         DIRECTORY: ${{ inputs.path }}
