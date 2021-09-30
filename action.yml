@@ -75,16 +75,65 @@ runs:
       env:
         DIRECTORY: ${{ inputs.path }}
       shell: bash
-      
-    - name: Extract branch name
+    
+    - id: branch
+      run: |
+        if [[ "${{ github.ref }}" != "refs/tags/"* ]]; then
+          BASE_REF=$(printf "%q" "${{ github.base_ref }}")
+          HEAD_REF=$(printf "%q" "${{ github.head_ref }}")
+          REF=$(printf "%q" "${{ github.ref }}")
+          BASE_REF=${BASE_REF/refs\/heads\//}
+          HEAD_REF=${HEAD_REF/refs\/heads\//}
+          echo "::set-output name=base_ref_branch::$(eval printf "%s" "$BASE_REF")"
+          echo "::set-output name=head_ref_branch::$(eval printf "%s" "$HEAD_REF")"
+          REF_BRANCH=${REF/refs\/pull\//}
+          REF_BRANCH=${REF_BRANCH/refs\/heads\//}
+          echo "::set-output name=ref_branch::$(eval printf "%s" "$REF_BRANCH")"
+        fi
       shell: bash
-      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-      id: extract_branch
+      
+    - id: current_branch
+      run: |
+        if [[ "${{ github.ref }}" != "refs/tags/"* ]]; then
+          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
+            echo "::set-output name=current_branch::${{ steps.branch.outputs.head_ref_branch }}"
+          else
+            echo "::set-output name=current_branch::${{ steps.branch.outputs.ref_branch }}"
+          fi
+        else
+          REF=$(printf "%q" "${{ github.ref }}")
+          REF_BRANCH=${REF/refs\/tags\/${{ inputs.strip_tag_prefix }}/}
+          echo "::set-output name=current_branch::$(eval printf "%s" "$REF_BRANCH")"
+        fi
+      shell: bash
+      
+    - id: default
+      run: |
+        if [[ "${{ github.ref }}" != "refs/tags/"* ]]; then
+          if [[ "${{ steps.current_branch.outputs.current_branch }}" == "${{ steps.branch.outputs.ref_branch }}" ]]; then
+            echo "::set-output name=is_default::true"
+          else
+            echo "::set-output name=is_default::false"
+          fi
+        fi
+      shell: bash
+      
+    - id: tag
+      run: |
+        if [[ "${{ github.ref }}" == "refs/tags/"* ]]; then
+          REF=$(printf "%q" "${{ github.ref }}")
+          TAG=${REF/refs\/tags\/${{ inputs.strip_tag_prefix }}/}
+          echo "::set-output name=tag::$(eval printf "%s" "$TAG")"
+          echo "::set-output name=is_tag::true"
+        else
+          echo "::set-output name=is_tag::false"
+        fi
+      shell: bash
 
     - name: Clone the repository (bare)
       run: |
         echo "::group::Cloning the repository"
-        $GIT -c protocol.version=2 clone --branch ${{ steps.extract_branch.outputs.branch }} --filter=blob:none --no-checkout ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}/${REPOSITORY} .
+        $GIT -c protocol.version=2 clone --branch ${{ steps.current_branch.outputs.current_branch }} --filter=blob:none --no-checkout ${GITHUB_SERVER_URL/https:\/\//https:\/\/x-access-token:${TOKEN}@}/${REPOSITORY} .
         echo "::endgroup::"
       env:
         REPOSITORY: ${{ inputs.repository }}
