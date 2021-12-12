@@ -69,14 +69,22 @@ runs:
 
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
-        sudo chown -R $USER:$USER ${{ github.workspace }} || true
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          chown -R $USER:$USER ${{ github.workspace }} || true
+        else
+          sudo chown -R $USER:$USER ${{ github.workspace }} || true
+        fi
       shell: bash
 
     - name: Ensure clean directory
       run: |
         BASE_DIR=`basename "$PWD"`
         cd ..
-        sudo rm -rf $BASE_DIR || true
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          rm -rf $BASE_DIR || true
+        else
+          sudo rm -rf $BASE_DIR || true
+        fi
         mkdir -p $BASE_DIR
         cd $BASE_DIR
         ls -la ${{ github.workspace }}
