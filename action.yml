@@ -78,16 +78,16 @@ runs:
 
     - name: Ensure clean directory
       run: |
-        BASE_DIR=`basename "$PWD"`
-        cd ..
         if [ "$RUNNER_OS" == "Windows" ]; then
-          rm -rf $BASE_DIR || true
+          echo "Skipping ensuring clean directory on Windows"
         else
+          BASE_DIR=`basename "$PWD"`
+          cd ..
           sudo rm -rf $BASE_DIR || true
+          mkdir -p $BASE_DIR
+          cd $BASE_DIR
+          ls -la ${{ github.workspace }}
         fi
-        mkdir -p $BASE_DIR
-        cd $BASE_DIR
-        ls -la ${{ github.workspace }}
       env:
         DIRECTORY: ${{ inputs.path }}
       shell: bash
