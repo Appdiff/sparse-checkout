@@ -160,7 +160,6 @@ runs:
     - name: Sparse checkout
       run: |
         echo "::group::Setting up sparse checkout"
-        $GIT config --system core.longpaths true
         $GIT sparse-checkout set $PATTERNS
         $GIT read-tree -mu HEAD
         echo "::endgroup::"
