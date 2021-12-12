@@ -70,7 +70,7 @@ runs:
     - name: cleanup #https://github.com/actions/checkout/issues/211
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          chown -R $USER:$USER ${{ github.workspace }} || true
+          echo "Skipping chown on Windows"
         else
           sudo chown -R $USER:$USER ${{ github.workspace }} || true
         fi
